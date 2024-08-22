@@ -1,0 +1,14 @@
+body {
+    margin: 0;
+}
+
+.header {
+    position: absolute;
+    z-index: 1;
+    padding: 10px;
+}
+
+.canvas {
+    width: 100vw !important;
+    height: 100vh !important
+}
