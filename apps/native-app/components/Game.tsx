@@ -20,7 +20,7 @@ import {
   Sphere,
   Line,
 } from "@react-three/drei/native";
-import { closestTown, MyRoomState, Vec, ToJSON, origin } from "server";
+import {closestTown, MyRoomState, Vec, ToJSON, origin, Town} from "server";
 import { Text, View, StyleSheet, Platform } from "react-native";
 import { FpsCounter } from "@/components/Fps";
 import { ShaderMaterial } from "three";
@@ -47,6 +47,9 @@ void main() {
 `;
 
 const defaultGroundUniform = {
+  townsLength: {
+    value: 2,
+  },
   towns: {
     value: [
       // xy
@@ -65,12 +68,13 @@ const groundFrag = `
 const int maxCities = 50;
 const int len = (2 + 3) * maxCities;
 uniform float towns[len]; 
+uniform int townsLength;
 varying vec3 vUv;
 
 void main() {
   int closestTownIndex = 0;
-  float closestDistance = 1e100;
-  for (int i = 0; i < 2 ; i++){
+  float closestDistance = 1e10;
+  for (int i = 0; i < townsLength ; i++){
     // vec2 closestTown = vec2(towns[closestTownIndex * 5 + 0], towns[closestTownIndex * 5 + 0 + 1]);
     vec2 currentTown = vec2(towns[i * 5 + 0], towns[i * 5 + 0 + 1]);
     float d = distance(vUv.xy, currentTown);
@@ -80,8 +84,9 @@ void main() {
     }
   }
   //   
-  vec3 color = vec3(towns[closestTownIndex * 5 + 2 + 0], towns[closestTownIndex * 5 + 2 + 1], towns[closestTownIndex * 5 + 2 + 2]);
-  gl_FragColor = vec4(color, 1.0);
+  vec4 color = vec4(towns[closestTownIndex * 5 + 2 + 0], towns[closestTownIndex * 5 + 2 + 1], towns[closestTownIndex * 5 + 2 + 2], 1.0);
+  vec4 groundColor = vec4(0.0, 0.5, 0.0, 1.0);
+    gl_FragColor = mix(groundColor, color, 0.5);
 }
 `;
 
@@ -95,13 +100,22 @@ const PlayerMesh = (props: MeshProps & { color: string }) => (
   </mesh>
 );
 
-type TownMeshProps = GroupProps & { label: ReactNode };
+type TownMeshProps = GroupProps & { label: ReactNode } & {
+  town: ToJSON<Town>;
+};
+
+const hexFromTuple = (tuple: [number, number, number]) => {
+  const r = Math.floor(tuple[0] * 255).toString(16).padStart(2, '0');
+  const g = Math.floor(tuple[1] * 255).toString(16).padStart(2, '0');
+  const b = Math.floor(tuple[2] * 255).toString(16).padStart(2, '0');
+  return `#${r}${g}${b}`.toUpperCase();
+}
 
 const TownMesh = (props: TownMeshProps) => (
   <group {...props}>
-    <mesh scale={[0.1, 0.2, 0.1]} castShadow receiveShadow>
+    <mesh scale={[0.5, 0.5, 0.5]} castShadow receiveShadow>
       <cylinderGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial color={"#000000"} />
+      <meshStandardMaterial color={hexFromTuple(props.town.color)} />
     </mesh>
     {/* TODO fix */}
     {/*<Html*/}
@@ -187,9 +201,11 @@ const useGame = (): GameState => {
   }, []);
 
   useEffect(() => {
-    groundMaterial.uniforms.towns.value = Object.values(state.towns)
-      .map((town) => [town.pos.x, town.pos.y, 1.0, 0.0, 0.0])
+    const towns = Object.values(state.towns)
+    groundMaterial.uniforms.towns.value = towns
+      .map((town) => [town.pos.x, -town.pos.y, town.color[0], town.color[1], town.color[2]])
       .flat();
+    groundMaterial.uniforms.townsLength.value = towns.length;
   }, [state.towns]);
 
   return !roomRef.current
@@ -303,6 +319,7 @@ const LoadedGame = (props: {
             <View>
               <Text>Soldiers: {Math.ceil(me.soldiers)}</Text>
               <Text>Hunger: {Math.ceil(me.hunger * 100)}%</Text>
+              <Text>Pos: ({Math.round(me.pos.x)},{(Math.round( me.pos.y))}) </Text>
             </View>
           </View>
         )}
@@ -368,6 +385,7 @@ const LoadedGame = (props: {
           <TownMesh
             key={town.id}
             position={[town.pos.x ?? 0, 0, town.pos.y ?? 0]}
+            town={town}
             label={
               <View>
                 <Text style={styles.townLabel}>{town.name}</Text>

@@ -40,6 +40,7 @@ export class VecSchema extends Schema {
 
 export class Town extends Schema {
   @type('string') id: string
+  @type({array: 'number'}) color: [number, number, number] = [0, 0, 0]
   @type(VecSchema) pos: VecSchema = new VecSchema()
   @type('string') name: string = ''
   @type('number') maxPopulation: number = 10_000

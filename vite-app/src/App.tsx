@@ -72,6 +72,7 @@ const useGame = () => {
         maxPopulation: 1000,
         dailyRations: 1000,
         pos: { x: 0, y: 0 },
+        color: [0, 0, 0]
       },
     },
     size: { width: 0, height: 0 },

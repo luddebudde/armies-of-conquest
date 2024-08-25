@@ -44,6 +44,7 @@ export class MyRoom extends Room<MyRoomState> {
             maxPopulation: 10_000,
             population: 10_000,
             dailyRations: 365 * 10_000,
+            color: [Math.random(), Math.random(), Math.random()]
           }),
       )
       .forEach((town) => {
