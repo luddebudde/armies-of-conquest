@@ -13,18 +13,19 @@ import {
   MeshProps,
   ThreeEvent,
   Vector3,
-} from "@react-three/fiber/native";
+} from "@react-three/fiber";
 import {
   PerspectiveCamera,
   Plane,
   Sphere,
   Line,
   Text as Text3D,
-} from "@react-three/drei/native";
+  Html,
+} from "@react-three/drei";
 import { closestTown, MyRoomState, Vec, ToJSON, origin, Town } from "server";
-import { Text, View, StyleSheet, Platform } from "react-native";
 import { FpsCounter } from "@/components/Fps";
 import { ShaderMaterial } from "three";
+import "./App.css";
 
 const defaultVert = `
 varying vec3 vUv; 
@@ -126,9 +127,10 @@ const TownMesh = (props: TownMeshProps) => (
     </mesh>
     {/* TODO fix */}
 
-    <Text3D color="black" anchorX="center" anchorY="middle">
+    <Html center position={[0, 0.5, 0]}>
+      {" "}
       {props.label}
-    </Text3D>
+    </Html>
   </group>
 );
 
@@ -161,7 +163,7 @@ const useGame = (): GameState => {
   useEffect(() => {
     const join = async () => {
       const port = "2567";
-      const ip = Platform.OS === "android" ? "192.168.129.143" : "localhost";
+      const ip = "localhost";
       const client = new Client(`ws://${ip}:${port}`);
       console.log("Joining room...");
       try {
@@ -236,12 +238,14 @@ const groundMaterial = new ShaderMaterial({
   fragmentShader: groundFrag,
 });
 
-const styles = StyleSheet.create({
+const styles = {
   game: {
     flex: 1,
   },
   canvas: {
     flex: 1,
+    width: "100vw",
+    height: "100vh",
   },
   header: {
     fontSize: 20,
@@ -271,13 +275,13 @@ const styles = StyleSheet.create({
     color: "white",
     flexWrap: "nowrap",
   },
-});
+};
 
 export const Game = () => {
   const state = useGame();
 
   if (state.tag === "loading") {
-    return <Text>Loading...</Text>;
+    return <div>Loading...</div>;
   }
 
   return <LoadedGame state={state} />;
@@ -309,70 +313,70 @@ const LoadedGame = (props: {
   const me = state.players[room.sessionId ?? ""];
 
   if (!me) {
-    return <Text>Loading...</Text>;
+    return <div>Loading...</div>;
   }
 
   const towns = Object.values(state.towns);
 
   return (
-    <View style={styles.game}>
-      <View
+    <div style={styles.game}>
+      <div
         style={{
           position: "absolute",
           zIndex: 1,
           padding: 10,
         }}
       >
-        <FpsCounter />
+        {/* <FpsCounter /> */}
         {me && (
-          <View>
-            <Text style={styles.header}>Me ({me.color})</Text>
-            <View>
-              <Text>Soldiers: {Math.ceil(me.soldiers)}</Text>
-              <Text>Hunger: {Math.ceil(me.hunger * 100)}%</Text>
-              <Text>
+          <div>
+            <div style={styles.header}>Me ({me.color})</div>
+            <div>
+              <div>Soldiers: {Math.ceil(me.soldiers)}</div>
+              <div>Hunger: {Math.ceil(me.hunger * 100)}%</div>
+              <div>
                 Pos: ({Math.round(me.pos.x)},{Math.round(me.pos.y)}){" "}
-              </Text>
-            </View>
-          </View>
+              </div>
+            </div>
+          </div>
         )}
-        <View>
-          <Text style={styles.header}>Players:</Text>
-          <View style={styles.ul}>
+        <div>
+          <div style={styles.header}>Players:</div>
+          <div style={styles.ul}>
             {Object.entries(state.players).map(([playerId, player]) => (
-              <View key={playerId} style={styles.li}>
-                <View
+              <div key={playerId} style={styles.li}>
+                <div
                   style={{
                     backgroundColor: player.color,
                     width: 20,
                     height: 20,
                     borderRadius: 10,
                   }}
-                ></View>
-                <Text>{playerId}</Text>
-              </View>
+                ></div>
+                <div>{playerId}</div>
+              </div>
             ))}
-          </View>
-        </View>
-        <View>
-          <Text style={styles.header}>Towns:</Text>
-          <View style={styles.ul}>
+          </div>
+        </div>
+        <div>
+          <div style={styles.header}>Towns:</div>
+          <div style={styles.ul}>
             {Object.entries(state.towns).map(([townId, town]) => (
-              <View key={townId} style={styles.li}>
-                <View
+              <div key={townId} style={styles.li}>
+                <div
                   style={{
                     backgroundColor: hexFromTuple(town.color),
                     width: 20,
                     height: 20,
                     borderRadius: 10,
                   }}
-                ></View>
-                <Text>{town.name}</Text>
-              </View>
+                ></div>
+                <div>{town.name}</div>
+              </div>
             ))}
-          </View>
-        </View>
-      </View>
+          </div>
+        </div>
+      </div>
       <Canvas style={styles.canvas} shadows>
         <ambientLight intensity={1.5} />
         <Sphere position={[-5, 5, 5]}>
@@ -422,22 +426,22 @@ const LoadedGame = (props: {
             position={[town.pos.x ?? 0, 0, town.pos.y ?? 0]}
             town={town}
             label={
-              <View>
-                <Text style={styles.townLabel}>{town.name}</Text>
-                <Text style={styles.townLabel}>
+              <div>
+                <div style={styles.townLabel}>{town.name}</div>
+                <div style={styles.townLabel}>
                   🍏{" "}
                   {Math.ceil(
                     (town.dailyRations / (365 * town.population)) * 100,
                   )}
-                </Text>
-                <Text style={styles.townLabel}>
+                </div>
+                <div style={styles.townLabel}>
                   👥 {Math.ceil(town.population)}
-                </Text>
-              </View>
+                </div>
+              </div>
             }
           />
         ))}
       </Canvas>
-    </View>
+    </div>
   );
 };
